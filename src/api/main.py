@@ -217,6 +217,90 @@ async def debug_environment():
         'timestamp': datetime.now().isoformat()
     }
 
+@app.post("/admin/init-database")
+async def initialize_database():
+    """Initialize database tables (Railway production only)"""
+    if os.getenv("RAILWAY_ENVIRONMENT") != "production":
+        raise HTTPException(status_code=403, detail="Database init only available in Railway production")
+    
+    try:
+        import asyncpg
+        from pathlib import Path
+        
+        config = get_config()
+        database_url = config.get_database_url()
+        
+        if not database_url or database_url.startswith("postgresql://car_user:dev_password@localhost"):
+            raise HTTPException(status_code=400, detail="No Railway database URL configured")
+        
+        logger.info(f"🔗 Connecting to: {database_url[:50]}...")
+        
+        # Test connection with longer timeout using dsn parameter
+        conn = await asyncpg.connect(
+            dsn=database_url,
+            command_timeout=30,
+            timeout=30,
+            server_settings={'jit': 'off'}
+        )
+        
+        # Create tables
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                phone_number VARCHAR(20) UNIQUE NOT NULL,
+                name VARCHAR(255),
+                location VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS cars (
+                id SERIAL PRIMARY KEY,
+                url VARCHAR(500) UNIQUE NOT NULL,
+                title VARCHAR(255),
+                brand VARCHAR(100),
+                model VARCHAR(100),
+                year INTEGER,
+                price DECIMAL(10,2),
+                price_raw VARCHAR(50),
+                location VARCHAR(255),
+                description TEXT,
+                phone_number VARCHAR(20),
+                user_id INTEGER REFERENCES users(id),
+                images JSONB,
+                features JSONB,
+                equipment_list JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Test record count
+        user_count = await conn.fetchval("SELECT COUNT(*) FROM users")
+        car_count = await conn.fetchval("SELECT COUNT(*) FROM cars")
+        
+        await conn.close()
+        
+        return {
+            'success': True,
+            'message': 'Database initialized successfully',
+            'tables_created': ['users', 'cars'],
+            'user_count': user_count,
+            'car_count': car_count,
+            'database_url': database_url[:50] + "...",
+            'timestamp': datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        return {
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }
+
 @app.post("/scrape/main")
 async def scrape_main_page(background_tasks: BackgroundTasks, max_cars: int = 10, upload_images: bool = True):
     """Scrape main cars page"""

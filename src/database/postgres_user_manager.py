@@ -27,10 +27,12 @@ class PostgreSQLUserManager:
         if not self.pool:
             try:
                 self.pool = await asyncpg.create_pool(
-                    self.database_url,
+                    dsn=self.database_url,
                     min_size=2,
                     max_size=10,
-                    command_timeout=60
+                    command_timeout=60,
+                    timeout=30,
+                    server_settings={'jit': 'off'}
                 )
                 logger.info("PostgreSQL connection pool created successfully")
             except Exception as e:

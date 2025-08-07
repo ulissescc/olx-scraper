@@ -77,6 +77,7 @@ class Config:
             # Railway Database (automatic)
             'POSTGRES_URL': 'database.url',
             'PGURL': 'database.url',
+            'RAILWAY_PRIVATE_DOMAIN': 'database.railway_domain',
             
             # AWS S3
             'AWS_S3_BUCKET': 'aws_s3.bucket_name',

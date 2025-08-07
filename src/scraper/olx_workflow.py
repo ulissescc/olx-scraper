@@ -72,12 +72,15 @@ class OLXWorkflowOrchestrator:
     async def initialize(self):
         """Initialize async components"""
         try:
-            # Initialize database connection pool
+            # Initialize database connection pool with Railway URL
+            logger.info(f"🔗 Connecting to database: {self.database_url[:50]}...")
             self.db_pool = await asyncpg.create_pool(
-                self.database_url,
+                dsn=self.database_url,
                 min_size=2,
                 max_size=10,
-                command_timeout=60
+                command_timeout=60,
+                timeout=30,
+                server_settings={'jit': 'off'}
             )
             
             # Initialize user manager
