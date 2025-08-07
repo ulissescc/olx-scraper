@@ -16,6 +16,7 @@ import uvicorn
 
 from ..config_loader import get_config
 from .production_scraper import ProductionScraper
+from .admin_dashboard import create_admin_routes
 
 # Configure logging
 logging.basicConfig(
@@ -34,6 +35,9 @@ app = FastAPI(
 # Global scraper instance
 scraper = ProductionScraper()
 
+# Add admin dashboard routes
+create_admin_routes(app)
+
 @app.get("/")
 async def root():
     """Root endpoint with API information"""
@@ -42,7 +46,9 @@ async def root():
         "version": "1.0.0",
         "status": "online",
         "timestamp": datetime.now().isoformat(),
+        "admin_dashboard": "/admin",
         "endpoints": {
+            "admin_dashboard": "/admin",
             "health": "/health",
             "scrape_brand": "/scrape/brand/{brand}?max_cars=10",
             "scrape_main": "/scrape/main?max_cars=10",

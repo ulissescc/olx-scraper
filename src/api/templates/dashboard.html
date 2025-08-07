@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        
+        .header { background: #2563eb; color: white; padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { display: flex; align-items: center; gap: 0.5rem; }
+        .status { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        
+        .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+        .card h2 { color: #1f2937; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .stat { text-align: center; padding: 1rem; background: #f9fafb; border-radius: 6px; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #2563eb; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+        
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; text-decoration: none; transition: background 0.2s; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-secondary { background: #6b7280; }
+        .btn-secondary:hover { background: #4b5563; }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; }
+        .form-input, .form-select { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .job-item { padding: 1rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 1rem; background: white; }
+        .job-header { display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem; }
+        .job-status { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+        .status-running { background: #dbeafe; color: #1d4ed8; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        
+        .progress-bar { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
+        .progress-fill { height: 100%; background: #2563eb; transition: width 0.3s ease; }
+        
+        .log-container { max-height: 300px; overflow-y: auto; background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 6px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.75rem; }
+        .log-entry { margin-bottom: 0.25rem; }
+        .log-timestamp { color: #9ca3af; }
+        .log-level-info { color: #60a5fa; }
+        .log-level-error { color: #f87171; }
+        .log-level-success { color: #34d399; }
+        
+        .config-section { margin-bottom: 1.5rem; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 6px; margin-bottom: 0.5rem; }
+        .config-value { font-family: monospace; background: #e5e7eb; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; }
+        
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .table th { background: #f9fafb; font-weight: 500; color: #374151; }
+        .table tr:hover { background: #f9fafb; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; }
+        .modal.show { display: block; }
+        
+        .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+        
+        .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #f3f4f6; border-top: 2px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .grid { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            🚀 OLX Scraper Admin Dashboard
+            <span class="status" id="connectionStatus"></span>
+        </h1>
+    </div>
+    
+    <div class="container">
+        <!-- Statistics Overview -->
+        <div class="grid">
+            <div class="card">
+                <h2>📊 Live Statistics</h2>
+                <div class="stat-grid">
+                    <div class="stat">
+                        <div class="stat-value" id="totalJobs">0</div>
+                        <div class="stat-label">Total Jobs</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="successfulJobs">0</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="totalCars">0</div>
+                        <div class="stat-label">Cars Scraped</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="activeJobs">0</div>
+                        <div class="stat-label">Active Jobs</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🗄️ Database Stats</h2>
+                <div class="stat-grid" id="dbStats">
+                    <div class="stat">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Total Cars</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Price Rate</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Loading...</div>
+                        <div class="stat-label">Phone Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Jobs -->
+        <div class="card">
+            <h2>🔄 Active Scraping Jobs</h2>
+            <div id="activeJobsList">
+                <p style="text-align: center; color: #6b7280; padding: 2rem;">No active jobs</p>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="grid">
+            <div class="card">
+                <h2>🚀 Quick Start</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <button class="btn" onclick="showScrapingModal('brand')">🚗 Scrape Brand</button>
+                    <button class="btn btn-success" onclick="showScrapingModal('main')">📋 Scrape Main</button>
+                    <button class="btn btn-secondary" onclick="showScrapingModal('url')">🔗 Custom URL</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <button class="btn" onclick="showConfigModal()">🔧 View Config</button>
+                    <button class="btn btn-secondary" onclick="loadDatabaseStats()">📊 Refresh Stats</button>
+                    <button class="btn btn-secondary" onclick="loadRecentCars()">📋 Recent Cars</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Cars -->
+        <div class="card">
+            <h2>📋 Recent Cars</h2>
+            <div style="overflow-x: auto;">
+                <table class="table" id="recentCarsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Brand</th>
+                            <th>Price</th>
+                            <th>Phone</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentCarsBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #6b7280;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scraping Modal -->
+    <div id="scrapingModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Start Scraping Job</h3>
+            <form id="scrapingForm">
+                <div id="modalFields"></div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn">
+                        <span class="loading" id="submitLoader" style="display: none;"></span>
+                        Start Scraping
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Config Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>⚙️ Configuration</h3>
+            <div id="configContent">Loading...</div>
+            <div style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentJobType = '';
+        
+        // WebSocket connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/status`);
+            
+            ws.onopen = function() {
+                document.getElementById('connectionStatus').style.background = '#10b981';
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+            
+            ws.onclose = function() {
+                document.getElementById('connectionStatus').style.background = '#dc2626';
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function() {
+                document.getElementById('connectionStatus').style.background = '#f59e0b';
+            };
+        }
+        
+        // Update dashboard with real-time data
+        function updateDashboard(data) {
+            if (data.statistics) {
+                document.getElementById('totalJobs').textContent = data.statistics.total_jobs;
+                document.getElementById('successfulJobs').textContent = data.statistics.successful_jobs;
+                document.getElementById('totalCars').textContent = data.statistics.total_cars_scraped;
+                document.getElementById('activeJobs').textContent = data.active_jobs.length;
+            }
+            
+            if (data.active_jobs) {
+                updateActiveJobs(data.active_jobs);
+            }
+        }
+        
+        // Update active jobs display
+        function updateActiveJobs(jobs) {
+            const container = document.getElementById('activeJobsList');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 2rem;">No active jobs</p>';
+                return;
+            }
+            
+            container.innerHTML = jobs.map(job => `
+                <div class="job-item">
+                    <div class="job-header">
+                        <div>
+                            <strong>${job.type.toUpperCase()} Job</strong>
+                            <span class="job-status status-${job.status}">${job.status}</span>
+                        </div>
+                        <div style="font-size: 0.875rem; color: #6b7280;">
+                            Started: ${new Date(job.started_at).toLocaleTimeString()}
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${job.progress}%"></div>
+                    </div>
+                    <div style="font-size: 0.875rem; color: #4b5563;">
+                        ${job.current_step} • Cars found: ${job.cars_found || 0}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Show scraping modal
+        function showScrapingModal(type) {
+            currentJobType = type;
+            const modal = document.getElementById('scrapingModal');
+            const title = document.getElementById('modalTitle');
+            const fields = document.getElementById('modalFields');
+            
+            title.textContent = `Start ${type.charAt(0).toUpperCase() + type.slice(1)} Scraping`;
+            
+            let fieldsHTML = '';
+            
+            if (type === 'brand') {
+                fieldsHTML = `
+                    <div class="form-group">
+                        <label class="form-label">Brand</label>
+                        <select class="form-select" name="brand" required>
+                            <option value="">Select brand...</option>
+                            <option value="bmw">BMW</option>
+                            <option value="audi">Audi</option>
+                            <option value="mercedes">Mercedes</option>
+                            <option value="volkswagen">Volkswagen</option>
+                            <option value="toyota">Toyota</option>
+                            <option value="nissan">Nissan</option>
+                            <option value="ford">Ford</option>
+                            <option value="peugeot">Peugeot</option>
+                        </select>
+                    </div>
+                `;
+            } else if (type === 'url') {
+                fieldsHTML = `
+                    <div class="form-group">
+                        <label class="form-label">OLX URL</label>
+                        <input class="form-input" type="url" name="url" placeholder="https://www.olx.pt/carros-motos-e-barcos/carros/..." required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Pages</label>
+                        <input class="form-input" type="number" name="max_pages" value="2" min="1" max="5">
+                    </div>
+                `;
+            }
+            
+            fieldsHTML += `
+                <div class="form-group">
+                    <label class="form-label">Max Cars</label>
+                    <input class="form-input" type="number" name="max_cars" value="10" min="1" max="50">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" name="upload_images" checked> Upload images to S3
+                    </label>
+                </div>
+            `;
+            
+            fields.innerHTML = fieldsHTML;
+            modal.classList.add('show');
+        }
+        
+        // Show config modal
+        function showConfigModal() {
+            const modal = document.getElementById('configModal');
+            const content = document.getElementById('configContent');
+            
+            fetch('/admin/api/config')
+                .then(response => response.json())
+                .then(config => {
+                    content.innerHTML = `
+                        <div class="config-section">
+                            <h4>🔧 Scraper Configuration</h4>
+                            ${Object.entries(config.scraper).map(([key, value]) => 
+                                `<div class="config-item">
+                                    <span>${key}</span>
+                                    <span class="config-value">${value}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                        
+                        <div class="config-section">
+                            <h4>🗄️ Database Configuration</h4>
+                            ${Object.entries(config.database).map(([key, value]) => 
+                                `<div class="config-item">
+                                    <span>${key}</span>
+                                    <span class="config-value">${value}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                        
+                        <div class="config-section">
+                            <h4>🌍 Environment Variables</h4>
+                            ${Object.entries(config.environment_variables).map(([key, value]) => 
+                                `<div class="config-item">
+                                    <span>${key}</span>
+                                    <span class="config-value">${value || 'Not set'}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    `;
+                    modal.classList.add('show');
+                })
+                .catch(error => {
+                    content.innerHTML = '<div class="alert alert-error">Error loading configuration</div>';
+                    modal.classList.add('show');
+                });
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('scrapingModal').classList.remove('show');
+            document.getElementById('configModal').classList.remove('show');
+        }
+        
+        // Handle scraping form submission
+        document.getElementById('scrapingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.upload_images = formData.has('upload_images');
+            
+            const loader = document.getElementById('submitLoader');
+            loader.style.display = 'inline-block';
+            
+            fetch(`/admin/api/scrape/${currentJobType}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                loader.style.display = 'none';
+                if (result.success) {
+                    closeModal();
+                    showAlert('Scraping job started successfully!', 'success');
+                } else {
+                    showAlert('Failed to start scraping job', 'error');
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                showAlert('Error starting scraping job', 'error');
+            });
+        });
+        
+        // Load database stats
+        function loadDatabaseStats() {
+            fetch('/admin/api/database/stats')
+                .then(response => response.json())
+                .then(stats => {
+                    const container = document.getElementById('dbStats');
+                    container.innerHTML = `
+                        <div class="stat">
+                            <div class="stat-value">${stats.total_cars || 0}</div>
+                            <div class="stat-label">Total Cars</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.total_users || 0}</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.price_extraction_rate || 0}%</div>
+                            <div class="stat-label">Price Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${stats.phone_extraction_rate || 0}%</div>
+                            <div class="stat-label">Phone Rate</div>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Load recent cars
+        function loadRecentCars() {
+            fetch('/admin/api/recent-cars?limit=10')
+                .then(response => response.json())
+                .then(cars => {
+                    const tbody = document.getElementById('recentCarsBody');
+                    if (cars.error) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #dc2626;">Error: ${cars.error}</td></tr>`;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = cars.map(car => `
+                        <tr>
+                            <td>${car.id}</td>
+                            <td>${car.title}</td>
+                            <td>${car.brand}</td>
+                            <td>${car.price}</td>
+                            <td>${car.phone}</td>
+                            <td>${new Date(car.created_at).toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                });
+        }
+        
+        // Show alert
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            connectWebSocket();
+            loadDatabaseStats();
+            loadRecentCars();
+            
+            // Refresh data every 30 seconds
+            setInterval(() => {
+                loadDatabaseStats();
+                loadRecentCars();
+            }, 30000);
+        });
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
