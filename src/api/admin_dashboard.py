@@ -25,6 +25,18 @@ active_scrapers = {}
 scraping_logs = []
 websocket_connections = []
 
+def serialize_jobs_for_json(jobs):
+    """Convert job datetime objects to ISO strings for JSON serialization"""
+    serializable_jobs = []
+    for job in jobs:
+        job_copy = job.copy()
+        if 'started_at' in job_copy and job_copy['started_at']:
+            job_copy['started_at'] = job_copy['started_at'].isoformat()
+        if 'completed_at' in job_copy and job_copy['completed_at']:
+            job_copy['completed_at'] = job_copy['completed_at'].isoformat()
+        serializable_jobs.append(job_copy)
+    return serializable_jobs
+
 class ScrapingTracker:
     """Track active scraping sessions"""
     
@@ -91,7 +103,7 @@ class ScrapingTracker:
         if websocket_connections:
             message = {
                 'type': 'status_update',
-                'active_jobs': list(self.active_jobs.values()),
+                'active_jobs': serialize_jobs_for_json(list(self.active_jobs.values())),
                 'statistics': self.statistics,
                 'timestamp': datetime.now().isoformat()
             }
@@ -139,10 +151,10 @@ def create_admin_routes(app: FastAPI):
         websocket_connections.append(websocket)
         
         try:
-            # Send initial data
+            # Send initial data with datetime serialization
             await websocket.send_json({
                 'type': 'initial_data',
-                'active_jobs': list(tracker.active_jobs.values()),
+                'active_jobs': serialize_jobs_for_json(list(tracker.active_jobs.values())),
                 'statistics': tracker.statistics,
                 'timestamp': datetime.now().isoformat()
             })
@@ -159,7 +171,7 @@ def create_admin_routes(app: FastAPI):
     async def get_status():
         """Get current scraping status"""
         return {
-            'active_jobs': list(tracker.active_jobs.values()),
+            'active_jobs': serialize_jobs_for_json(list(tracker.active_jobs.values())),
             'statistics': tracker.statistics,
             'timestamp': datetime.now().isoformat()
         }

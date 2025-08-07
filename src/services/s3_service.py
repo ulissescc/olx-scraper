@@ -7,7 +7,7 @@ Handles image uploads to S3 and generates presigned URLs
 import io
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 from urllib.parse import urlparse
@@ -317,7 +317,6 @@ class S3Service:
             S3 URL if successful, None otherwise
         """
         import requests
-        from urllib.parse import urlparse
         
         if not self.is_available():
             logger.warning("S3 service not available, skipping image upload")
