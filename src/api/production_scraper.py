@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from ..config_loader import get_config
-from ..scraper.olx_workflow import OLXWorkflowOrchestrator, run_brand_workflow, run_main_page_workflow
+from config_loader import get_config
+from scraper.olx_workflow import OLXWorkflowOrchestrator, run_brand_workflow, run_main_page_workflow
 
 # Configure logging
 logging.basicConfig(

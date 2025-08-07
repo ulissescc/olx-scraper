@@ -16,10 +16,10 @@ from typing import Dict, List, Optional, Any
 import sys
 
 # Import our components
-from .fixed_enhanced_scraper import FixedEnhancedOLXScraper
-from ..database.postgres_user_manager import PostgreSQLUserManager, UserManagerContext
-from .enhanced_data_transformer import EnhancedCarDataTransformer, transform_enhanced_scraped_data
-from ..services.s3_service import S3Service
+from scraper.fixed_enhanced_scraper import FixedEnhancedOLXScraper
+from database.postgres_user_manager import PostgreSQLUserManager, UserManagerContext
+from scraper.enhanced_data_transformer import EnhancedCarDataTransformer, transform_enhanced_scraped_data
+from services.s3_service import S3Service
 
 # Configure logging
 logging.basicConfig(

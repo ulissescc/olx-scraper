@@ -17,8 +17,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import asyncpg
 
-from ..config_loader import get_config
-from .production_scraper import ProductionScraper
+from config_loader import get_config
+from api.production_scraper import ProductionScraper
 
 # Global tracking state
 active_scrapers = {}

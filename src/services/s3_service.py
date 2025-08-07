@@ -17,7 +17,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from PIL import Image
 
 # Import local config
-from ..config_loader import get_config
+from config_loader import get_config
 
 logger = logging.getLogger(__name__)
 

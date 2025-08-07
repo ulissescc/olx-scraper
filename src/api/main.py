@@ -5,6 +5,7 @@ FastAPI web service for running scraping jobs
 """
 
 import os
+import sys
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -14,9 +15,22 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from ..config_loader import get_config
-from .production_scraper import ProductionScraper
-from .admin_dashboard import create_admin_routes
+from config_loader import get_config
+
+# Import components with error handling
+try:
+    from api.production_scraper import ProductionScraper
+    SCRAPER_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Scraper import failed: {e}")
+    SCRAPER_AVAILABLE = False
+
+try:
+    from api.admin_dashboard import create_admin_routes
+    ADMIN_AVAILABLE = True  
+except ImportError as e:
+    print(f"⚠️ Admin dashboard import failed: {e}")
+    ADMIN_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -32,11 +46,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Global scraper instance
-scraper = ProductionScraper()
+# Initialize components if available
+if SCRAPER_AVAILABLE:
+    scraper = ProductionScraper()
+    print("✅ Production scraper initialized")
+else:
+    scraper = None
+    print("❌ Production scraper not available")
 
-# Add admin dashboard routes
-create_admin_routes(app)
+# Add admin dashboard routes if available
+if ADMIN_AVAILABLE:
+    create_admin_routes(app)
+    print("✅ Admin dashboard routes added")
+else:
+    print("❌ Admin dashboard not available")
 
 @app.get("/")
 async def root():
@@ -61,44 +84,53 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Railway"""
-    config = get_config()
-    
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "database_configured": bool(config.get_database_url()),
-        "s3_configured": bool(config.get('aws_s3.bucket_name')),
-        "environment": os.getenv("RAILWAY_ENVIRONMENT", "development")
+        "service": "OLX Car Scraper API",
+        "version": "1.0.0"
     }
 
 @app.get("/config")
 async def get_config_info():
     """Get configuration information (non-sensitive)"""
-    config = get_config()
-    
-    return {
-        "scraper": {
-            "headless": config.is_headless_enabled(),
-            "max_cars_default": config.get_max_cars_default(),
-            "max_pages_default": config.get_max_pages_default(),
-            "phone_extraction": config.is_phone_extraction_enabled()
-        },
-        "workflow": {
-            "image_upload": config.is_image_upload_enabled(),
-            "user_management": config.get('workflow.enable_user_management', True)
-        },
-        "s3": {
-            "bucket_configured": bool(config.get('aws_s3.bucket_name')),
-            "region": config.get('aws_s3.region')
-        },
-        "database": {
-            "configured": bool(config.get_database_url())
+    try:
+        config = get_config()
+        
+        return {
+            "scraper": {
+                "headless": config.is_headless_enabled(),
+                "max_cars_default": config.get_max_cars_default(),
+                "max_pages_default": config.get_max_pages_default(),
+                "phone_extraction": config.is_phone_extraction_enabled()
+            },
+            "workflow": {
+                "image_upload": config.is_image_upload_enabled(),
+                "user_management": config.get('workflow.enable_user_management', True)
+            },
+            "s3": {
+                "bucket_configured": bool(config.get('aws_s3.bucket_name')),
+                "region": config.get('aws_s3.region')
+            },
+            "database": {
+                "configured": bool(config.get_database_url())
+            }
         }
-    }
+    except Exception as e:
+        return {
+            "error": f"Configuration error: {str(e)}",
+            "scraper": {"available": False},
+            "workflow": {"available": False},
+            "s3": {"available": False},
+            "database": {"available": False}
+        }
 
 @app.post("/scrape/brand/{brand}")
 async def scrape_brand(brand: str, background_tasks: BackgroundTasks, max_cars: int = 10, upload_images: bool = True):
     """Scrape a specific car brand"""
+    if not SCRAPER_AVAILABLE or not scraper:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
+        
     if max_cars > 50:
         raise HTTPException(status_code=400, detail="max_cars cannot exceed 50")
     
@@ -120,6 +152,9 @@ async def scrape_brand(brand: str, background_tasks: BackgroundTasks, max_cars: 
 @app.post("/scrape/main")
 async def scrape_main_page(background_tasks: BackgroundTasks, max_cars: int = 10, upload_images: bool = True):
     """Scrape main cars page"""
+    if not SCRAPER_AVAILABLE or not scraper:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
+        
     if max_cars > 50:
         raise HTTPException(status_code=400, detail="max_cars cannot exceed 50")
     
@@ -146,6 +181,9 @@ async def scrape_custom_url(
     upload_images: bool = True
 ):
     """Scrape a custom OLX URL"""
+    if not SCRAPER_AVAILABLE or not scraper:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
+        
     if max_cars > 50:
         raise HTTPException(status_code=400, detail="max_cars cannot exceed 50")
     
@@ -171,6 +209,14 @@ async def scrape_custom_url(
 @app.get("/results")
 async def get_recent_results(limit: int = 10):
     """Get recent scraping results"""
+    if not SCRAPER_AVAILABLE or not scraper:
+        return {
+            "results": [],
+            "total": 0,
+            "timestamp": datetime.now().isoformat(),
+            "message": "Scraper service not available"
+        }
+        
     try:
         results = scraper.get_recent_results(limit=min(limit, 50))
         return {
