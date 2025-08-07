@@ -193,6 +193,30 @@ async def test_scrape_no_db(max_cars: int = 5):
         logger.error(f"❌ Test scraping error: {e}")
         raise HTTPException(status_code=500, detail=f"Test scraping failed: {str(e)}")
 
+@app.get("/debug/env")
+async def debug_environment():
+    """Debug endpoint to check environment variables (Railway only)"""
+    if os.getenv("RAILWAY_ENVIRONMENT") != "production":
+        raise HTTPException(status_code=403, detail="Debug endpoint only available in Railway production")
+    
+    # Only show database-related env vars for security
+    env_vars = {}
+    for key in os.environ:
+        if any(db_key in key.upper() for db_key in ['DATABASE', 'POSTGRES', 'DB_', 'PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD']):
+            if 'PASSWORD' in key.upper() or 'SECRET' in key.upper():
+                env_vars[key] = '***MASKED***'
+            else:
+                env_vars[key] = os.getenv(key)
+    
+    config = get_config()
+    return {
+        'railway_environment': os.getenv("RAILWAY_ENVIRONMENT"),
+        'database_env_vars': env_vars,
+        'config_database_url': config.get_database_url()[:50] + "..." if config.get_database_url() else None,
+        'port': os.getenv("PORT"),
+        'timestamp': datetime.now().isoformat()
+    }
+
 @app.post("/scrape/main")
 async def scrape_main_page(background_tasks: BackgroundTasks, max_cars: int = 10, upload_images: bool = True):
     """Scrape main cars page"""
