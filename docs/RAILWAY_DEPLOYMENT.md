@@ -34,6 +34,7 @@ railway variables set MAX_CARS=20
 railway variables set SCRAPER_HEADLESS=true
 railway variables set PHONE_EXTRACTION=true
 railway variables set S3_UPLOAD_ENABLED=true
+# Note: PORT is automatically set by Railway
 ```
 
 ### 3. Deploy to Railway
