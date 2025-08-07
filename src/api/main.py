@@ -73,6 +73,7 @@ async def root():
         "endpoints": {
             "admin_dashboard": "/admin",
             "health": "/health",
+            "test_scrape": "/test-scrape?max_cars=5",
             "scrape_brand": "/scrape/brand/{brand}?max_cars=10",
             "scrape_main": "/scrape/main?max_cars=10",
             "scrape_url": "/scrape/url?url={url}&max_cars=10",
@@ -148,6 +149,49 @@ async def scrape_brand(brand: str, background_tasks: BackgroundTasks, max_cars: 
     except Exception as e:
         logger.error(f"❌ Brand scraping error: {e}")
         raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
+
+@app.post("/test-scrape")
+async def test_scrape_no_db(max_cars: int = 5):
+    """Test scraping without database - just extract data"""
+    if not SCRAPER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Scraper service not available")
+        
+    if max_cars > 10:
+        max_cars = 10
+    
+    try:
+        logger.info(f"🧪 Test scraping without database: max_cars={max_cars}")
+        
+        # Import the scraper directly 
+        from scraper.fixed_enhanced_scraper import FixedEnhancedOLXScraper
+        
+        scraper = FixedEnhancedOLXScraper(
+            use_selenium=False,  # Force HTTP-only mode
+            headless=True
+        )
+        
+        # Scrape main page without database
+        cars = scraper.scrape_with_fixed_enhanced_method(
+            page_url="https://www.olx.pt/carros-motos-e-barcos/carros/",
+            max_pages=1,
+            max_cars=max_cars
+        )
+        
+        scraper.close()
+        
+        return {
+            'success': True,
+            'source': 'test_scrape',
+            'cars_found': len(cars),
+            'cars': cars[:3],  # Return first 3 for preview
+            'total_cars': len(cars),
+            'timestamp': datetime.now().isoformat(),
+            'note': 'Test scraping without database storage'
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Test scraping error: {e}")
+        raise HTTPException(status_code=500, detail=f"Test scraping failed: {str(e)}")
 
 @app.post("/scrape/main")
 async def scrape_main_page(background_tasks: BackgroundTasks, max_cars: int = 10, upload_images: bool = True):

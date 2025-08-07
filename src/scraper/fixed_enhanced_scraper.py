@@ -88,9 +88,20 @@ class FixedEnhancedOLXScraper:
             chrome_options = Options()
             if self.headless:
                 chrome_options.add_argument('--headless')
+            
+            # Railway/Docker compatibility options
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
             chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-extensions')
+            chrome_options.add_argument('--disable-plugins')
+            chrome_options.add_argument('--disable-images')
+            chrome_options.add_argument('--disable-javascript')
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument('--disable-features=VizDisplayCompositor')
+            chrome_options.add_argument('--remote-debugging-port=9222')
+            chrome_options.add_argument('--single-process')
+            chrome_options.add_argument('--no-zygote')
             chrome_options.add_argument(f'--user-agent={self.ua.random}')
             
             self.driver = webdriver.Chrome(
@@ -121,7 +132,9 @@ class FixedEnhancedOLXScraper:
             logger.info("🌐 WebDriver initialized successfully")
         except Exception as e:
             logger.error(f"❌ Failed to initialize WebDriver: {e}")
+            logger.warning("⚠️ Falling back to HTTP-only scraping (no phone extraction)")
             self.driver = None
+            self.use_selenium = False
     
     def get_corrected_listing_urls(self, page_url: str, max_pages: int = 3) -> List[Dict[str, Any]]:
         """

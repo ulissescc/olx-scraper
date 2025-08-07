@@ -38,6 +38,17 @@ class ProductionScraper:
         logger.info(f"📊 Max cars: {max_cars}, Images: {'✅' if upload_images else '❌'}")
         
         try:
+            # Check if we have database access first
+            database_url = self.config.get_database_url()
+            if not database_url or database_url.startswith("postgresql://car_user:dev_password@localhost"):
+                return {
+                    'success': False,
+                    'brand': brand,
+                    'error': 'Database not configured for production environment',
+                    'timestamp': datetime.now().isoformat(),
+                    'note': 'Ensure DATABASE_URL or POSTGRES_URL environment variable is set'
+                }
+            
             result = await run_brand_workflow(
                 brand_name=brand,
                 max_cars=max_cars,
@@ -74,6 +85,17 @@ class ProductionScraper:
         logger.info(f"📊 Max cars: {max_cars}, Images: {'✅' if upload_images else '❌'}")
         
         try:
+            # Check if we have database access first
+            database_url = self.config.get_database_url()
+            if not database_url or database_url.startswith("postgresql://car_user:dev_password@localhost"):
+                return {
+                    'success': False,
+                    'source': 'main_page',
+                    'error': 'Database not configured for production environment',
+                    'timestamp': datetime.now().isoformat(),
+                    'note': 'Ensure DATABASE_URL or POSTGRES_URL environment variable is set'
+                }
+            
             result = await run_main_page_workflow(
                 max_cars=max_cars,
                 upload_images=upload_images
