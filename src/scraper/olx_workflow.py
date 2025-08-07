@@ -423,9 +423,14 @@ class OLXWorkflowOrchestrator:
 # Workflow factory functions
 async def run_brand_workflow(brand_name: str, max_cars: int = 20, upload_images: bool = True) -> Dict[str, Any]:
     """Run workflow for a specific brand"""
+    from config_loader import get_config
+    
     brand_url = f"https://www.olx.pt/carros-motos-e-barcos/carros/{brand_name.lower()}/"
     
-    orchestrator = OLXWorkflowOrchestrator()
+    config = get_config()
+    orchestrator = OLXWorkflowOrchestrator(
+        database_url=config.get_database_url()
+    )
     
     try:
         await orchestrator.initialize()
@@ -441,9 +446,14 @@ async def run_brand_workflow(brand_name: str, max_cars: int = 20, upload_images:
 
 async def run_main_page_workflow(max_cars: int = 10, upload_images: bool = True) -> Dict[str, Any]:
     """Run workflow on main OLX cars page"""
+    from config_loader import get_config
+    
     main_url = "https://www.olx.pt/carros-motos-e-barcos/carros/"
     
-    orchestrator = OLXWorkflowOrchestrator()
+    config = get_config()
+    orchestrator = OLXWorkflowOrchestrator(
+        database_url=config.get_database_url()
+    )
     
     try:
         await orchestrator.initialize()
