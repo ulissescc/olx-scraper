@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PostgreSQLUserManager:
     """Manages users and their associated cars using PostgreSQL database"""
     
-    def __init__(self, database_url: str = "postgresql://car_user:dev_password@localhost:5432/car_marketplace_dev"):
+    def __init__(self, database_url: str = None):
         """Initialize the PostgreSQL user manager"""
         self.database_url = database_url
         self.pool = None
@@ -25,6 +25,8 @@ class PostgreSQLUserManager:
     async def initialize_pool(self):
         """Initialize the connection pool"""
         if not self.pool:
+            if not self.database_url:
+                raise ValueError("Database URL is not configured for user manager")
             try:
                 self.pool = await asyncpg.create_pool(
                     dsn=self.database_url,

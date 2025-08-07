@@ -36,7 +36,7 @@ class OLXWorkflowOrchestrator:
     """Complete OLX scraping workflow orchestrator"""
     
     def __init__(self, 
-                 database_url: str = "postgresql://car_user:dev_password@localhost:5432/car_marketplace_dev",
+                 database_url: str = None,
                  cookies_file: str = "cookies.txt"):
         """Initialize workflow orchestrator"""
         self.database_url = database_url
@@ -72,6 +72,10 @@ class OLXWorkflowOrchestrator:
     async def initialize(self):
         """Initialize async components"""
         try:
+            # Validate database URL is configured
+            if not self.database_url:
+                raise ValueError("Database URL is not configured. Set DATABASE_URL environment variable.")
+            
             # Initialize database connection pool with Railway URL
             logger.info(f"🔗 Connecting to database: {self.database_url[:50]}...")
             self.db_pool = await asyncpg.create_pool(

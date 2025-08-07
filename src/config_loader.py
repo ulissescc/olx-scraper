@@ -149,7 +149,7 @@ class Config:
         """Get default configuration"""
         return {
             "database": {
-                "url": "postgresql://car_user:dev_password@localhost:5432/car_marketplace_dev",
+                "url": None,  # Force explicit configuration - no localhost fallback
                 "pool_min_size": 2,
                 "pool_max_size": 10,
                 "command_timeout": 60
@@ -211,9 +211,9 @@ class Config:
             logger.error(f"❌ Error getting config value '{path}': {e}")
             return default
     
-    def get_database_url(self) -> str:
-        """Get database URL"""
-        return self.get('database.url', 'postgresql://car_user:dev_password@localhost:5432/car_marketplace_dev')
+    def get_database_url(self) -> Optional[str]:
+        """Get database URL - returns None if not configured"""
+        return self.get('database.url')
     
     def get_cookies_file(self) -> Optional[str]:
         """Get cookies file path if it exists"""
