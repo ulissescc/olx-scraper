@@ -1,0 +1,45 @@
+{
+  "database": {
+    "url": "postgresql://car_user:dev_password@localhost:5432/car_marketplace_dev",
+    "pool_min_size": 2,
+    "pool_max_size": 10,
+    "command_timeout": 60
+  },
+  "scraper": {
+    "cookies_file": "cookies.txt",
+    "headless": true,
+    "default_max_pages": 2,
+    "default_max_cars": 20,
+    "random_delay_min": 2,
+    "random_delay_max": 4,
+    "phone_extraction_enabled": true,
+    "user_agent_rotation": true
+  },
+  "aws_s3": {
+    "bucket_name": "car-marketplace-images",
+    "region": "eu-west-1",
+    "upload_enabled": true,
+    "max_images_per_car": 5,
+    "image_quality": 85,
+    "image_max_size": 1920
+  },
+  "workflow": {
+    "enable_image_upload": true,
+    "enable_user_management": true,
+    "enable_phone_extraction": true,
+    "batch_size": 10,
+    "max_retries": 3,
+    "retry_delay": 5
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "olx_workflow.log",
+    "max_file_size": "10MB",
+    "backup_count": 5
+  },
+  "urls": {
+    "base_url": "https://www.olx.pt",
+    "cars_main": "https://www.olx.pt/carros-motos-e-barcos/carros/",
+    "brand_template": "https://www.olx.pt/carros-motos-e-barcos/carros/{brand}/"
+  }
+}
