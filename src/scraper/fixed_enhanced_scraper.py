@@ -395,6 +395,10 @@ class FixedEnhancedOLXScraper:
         """
         Main method: scrape cars with fixed enhanced approach
         """
+        # Ensure parameters are integers
+        max_cars = int(max_cars) if max_cars is not None else 10
+        max_pages = int(max_pages) if max_pages is not None else 2
+        
         logger.info(f"🚀 Starting FIXED enhanced scraping")
         logger.info(f"📊 Target: {max_cars} cars from {max_pages} pages")
         logger.info(f"🔗 URL: {page_url}")
